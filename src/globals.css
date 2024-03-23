@@ -1,0 +1,9 @@
+@tailwind utilities;
+@tailwind components;
+@tailwind base;
+
+@layer base {
+    html {
+        font-family: "Hanken Grotesk", system-ui, sans-serif;
+    }
+}
