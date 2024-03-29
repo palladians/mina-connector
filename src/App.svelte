@@ -3,6 +3,7 @@
     import { Mina } from "o1js";
     import { constructPaymentTx } from "./lib/tx";
     import Client from "mina-signer";
+    import { exampleCredential } from './credentials/mock_credential'
 
     const Local = Mina.LocalBlockchain();
     const signerClient = new Client({ network: Local.getNetworkId() });
@@ -79,6 +80,24 @@
             balance: response.result,
         });
     };
+    const getCredential = async () => {
+        const response = await window.mina.request({
+            method: 'mina_getState', params: []
+        })
+        console.log(response);
+        results.set({
+            ...$results,
+            credential: response.result,
+        })
+    };
+    const setCredentialState = async () => {
+        const response = await window.mina.request({
+            method: 'mina_setState', params: [exampleCredential]
+        })
+        console.log(response);
+        // nothing to write in the app
+        // since it is writing to Pallad
+    }
     export const results = writable({
         accounts: "",
         chainId: "",
@@ -86,6 +105,8 @@
         signFields: "",
         signMessage: "",
         signTransactions: "",
+        credential: "",
+        mockCredential: exampleCredential,
     });
 </script>
 
@@ -155,6 +176,23 @@
                     />
                     <button class="btn btn-neutral flex-1" on:click={getBalance}
                         >mina_getBalance</button
+                    >
+                    <button class="btn btn-neutral flex-1" on:click={getCredential}
+                        >mina_getState</button
+                    >
+                </div>
+            </div>
+        </div>
+        <div class="card bg-base-200 shadow-xl">
+            <div class="card-body">
+                <h2 class="text-2xl font-semibold">Setters</h2>
+                <div class="grid grid-cols-[2fr_1fr] gap-2">
+                    <input
+                        class="input input-bordered"
+                        value={$results.mockCredential}
+                    />
+                    <button class="btn btn-neutral flex-1" on:click={setCredentialState}
+                        >mina_setState</button
                     >
                 </div>
             </div>
