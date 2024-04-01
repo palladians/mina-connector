@@ -82,7 +82,7 @@
     };
     const getCredential = async () => {
         const response = await window.mina.request({
-            method: 'mina_getState', params: []
+            method: 'mina_getState', params: {query: {issuer: 'University of Example'}, props: []}
         })
         console.log(response);
         results.set({
@@ -92,7 +92,7 @@
     };
     const setCredentialState = async () => {
         const response = await window.mina.request({
-            method: 'mina_setState', params: [exampleCredential]
+            method: 'mina_setState', params: {objectName: "exampleCredential", object: exampleCredential}
         })
         console.log(response);
         // nothing to write in the app
