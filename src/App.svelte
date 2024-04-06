@@ -11,11 +11,13 @@
     export const walletIsConnected = writable<boolean>(false);
 
     onMount(() => {
-        walletName.set(window.mina?.wallet?.name);
-        walletIcon.set(window.mina?.wallet?.icon);
-        window.mina
-            ?.isConnected()
-            ?.then((res) => walletIsConnected.set(res.result));
+        setTimeout(() => {
+            walletName.set(window.mina?.wallet?.name);
+            walletIcon.set(window.mina?.wallet?.icon);
+            window.mina
+                ?.isConnected()
+                ?.then((res) => walletIsConnected.set(res.result));
+        }, 500);
     });
 
     export let enable = window.mina?.enable;
