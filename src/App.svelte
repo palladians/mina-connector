@@ -1,23 +1,21 @@
 <script lang="ts">
     import { writable } from "svelte/store";
-    import { Mina } from "o1js";
     import { constructPaymentTx } from "./lib/tx";
-    import Client from "mina-signer";
-    import { exampleCredential } from './credentials/mock_credential'
+    import { exampleCredential } from "./credentials/mock_credential";
 
-    const Local = Mina.LocalBlockchain();
-    const signerClient = new Client({ network: Local.getNetworkId() });
-    const keypair = signerClient.genKeys();
+    export const messageToSign = writable<string>("Message to sign");
+    export const fieldsToSign = writable<string>("[0]");
 
     const walletName = window.mina.wallet.name;
     const walletIcon = window.mina.wallet.icon;
+
     export let isConnected = window.mina.isConnected();
     export let enable = window.mina.enable;
     export let disconnect = window.mina.disconnect;
     export const signMessage = async () => {
         const response = await window.mina.request({
             method: "mina_sign",
-            params: { message: "test" },
+            params: { message: $messageToSign },
         });
         results.set({
             ...$results,
@@ -27,7 +25,7 @@
     export const signFields = async () => {
         const response = await window.mina.request({
             method: "mina_signFields",
-            params: [0],
+            params: JSON.parse($fieldsToSign),
         });
         results.set({
             ...$results,
@@ -35,16 +33,19 @@
         });
     };
     const signTx = async () => {
-        console.log(">>>KP", keypair);
+        const accountsResponse = await window.mina.request({
+            method: "mina_accounts",
+        });
         const constructedTx = constructPaymentTx({
-            from: keypair.publicKey,
-            to: keypair.publicKey,
+            from: accountsResponse.result[0],
+            to: "B62qkYa1o6Mj6uTTjDQCob7FYZspuhkm4RRQhgJg9j4koEBWiSrTQrS",
             amount: 100,
-            fee: 0,
+            fee: 1,
             type: "payment",
             nonce: 0,
             validUntil: 321,
         });
+        console.log(JSON.stringify(constructedTx));
         const response = await window.mina.request({
             method: "mina_signTransaction",
             params: { transaction: constructedTx },
@@ -82,22 +83,27 @@
     };
     const getCredential = async () => {
         const response = await window.mina.request({
-            method: 'mina_getState', params: {query: {issuer: 'University of Example'}, props: []}
-        })
+            method: "mina_getState",
+            params: { query: { issuer: "University of Example" }, props: [] },
+        });
         console.log(response);
         results.set({
             ...$results,
-            credential: response.result,
-        })
+            credential: JSON.stringify(response.result, undefined, "\t"),
+        });
     };
     const setCredentialState = async () => {
         const response = await window.mina.request({
-            method: 'mina_setState', params: {objectName: "exampleCredential", object: exampleCredential}
-        })
+            method: "mina_setState",
+            params: {
+                objectName: "exampleCredential",
+                object: exampleCredential,
+            },
+        });
         console.log(response);
         // nothing to write in the app
         // since it is writing to Pallad
-    }
+    };
     export const results = writable({
         accounts: "",
         chainId: "",
@@ -106,7 +112,6 @@
         signMessage: "",
         signTransactions: "",
         credential: "",
-        mockCredential: exampleCredential,
     });
 </script>
 
@@ -177,22 +182,26 @@
                     <button class="btn btn-neutral flex-1" on:click={getBalance}
                         >mina_getBalance</button
                     >
-                    <button class="btn btn-neutral flex-1" on:click={getCredential}
-                        >mina_getState</button
-                    >
                 </div>
             </div>
         </div>
         <div class="card bg-base-200 shadow-xl">
             <div class="card-body">
-                <h2 class="text-2xl font-semibold">Setters</h2>
-                <div class="grid grid-cols-[2fr_1fr] gap-2">
-                    <input
-                        class="input input-bordered"
-                        value={$results.mockCredential}
-                    />
-                    <button class="btn btn-neutral flex-1" on:click={setCredentialState}
-                        >mina_setState</button
+                <h2 class="text-2xl font-semibold">Proofs Store</h2>
+                <p>Result</p>
+                <textarea
+                    class="textarea textarea-bordered h-32 resize-none"
+                    placeholder="Result"
+                    value={$results.credential}
+                />
+                <div class="grid grid-cols-2 gap-2">
+                    <button
+                        class="btn btn-neutral flex-1"
+                        on:click={setCredentialState}>mina_setState</button
+                    >
+                    <button
+                        class="btn btn-neutral flex-1"
+                        on:click={getCredential}>mina_getState</button
                     >
                 </div>
             </div>
@@ -203,7 +212,7 @@
                 <p>Message</p>
                 <input
                     class="input input-bordered"
-                    placeholder="Message to sign"
+                    bind:value={$messageToSign}
                 />
                 <p>Result</p>
                 <textarea
@@ -223,7 +232,7 @@
                 <input
                     class="input input-bordered"
                     placeholder="Stringified fields"
-                    value="[0]"
+                    bind:value={$fieldsToSign}
                 />
                 <p>Result</p>
                 <textarea

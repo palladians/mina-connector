@@ -23,19 +23,17 @@ export type TransactionBody = {
 };
 
 export function constructPaymentTx(payment: TransactionBody) {
-  const sendFee = BigInt(payment.fee);
-  const sendAmount = payment.amount ? BigInt(payment.amount) : BigInt(0);
+  const sendFee = payment.fee;
+  const sendAmount = payment.amount ?? 0;
   const memo = payment.memo || "";
-  const validUntil = payment.validUntil
-    ? BigInt(payment.validUntil)
-    : BigInt(4294967295); // Mina Signer has a defaultValidUntil = '4294967295';
+  const validUntil = payment.validUntil ? payment.validUntil : 4294967295; // Mina Signer has a defaultValidUntil = '4294967295';
 
   return {
     to: payment.to,
     from: payment.from,
     amount: sendAmount,
     fee: sendFee,
-    nonce: BigInt(payment.nonce),
+    nonce: payment.nonce,
     memo: memo,
     validUntil: validUntil,
     type: TransactionKind.PAYMENT,
