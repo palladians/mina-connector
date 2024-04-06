@@ -18,8 +18,8 @@
             ?.then((res) => walletIsConnected.set(res.result));
     });
 
-    export let enable = window.mina.enable;
-    export let disconnect = window.mina.disconnect;
+    export let enable = window.mina?.enable;
+    export let disconnect = window.mina?.disconnect;
     export const signMessage = async () => {
         const response = await window.mina.request({
             method: "mina_sign",
