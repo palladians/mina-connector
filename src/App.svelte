@@ -2,14 +2,22 @@
     import { writable } from "svelte/store";
     import { constructPaymentTx } from "./lib/tx";
     import { exampleCredential } from "./credentials/mock_credential";
+    import { onMount } from "svelte";
 
     export const messageToSign = writable<string>("Message to sign");
     export const fieldsToSign = writable<string>("[0]");
+    export const walletName = writable<string>("");
+    export const walletIcon = writable<string>("");
+    export const walletIsConnected = writable<boolean>(false);
 
-    const walletName = window.mina.wallet.name;
-    const walletIcon = window.mina.wallet.icon;
+    onMount(() => {
+        walletName.set(window.mina?.wallet?.name);
+        walletIcon.set(window.mina?.wallet?.icon);
+        window.mina
+            ?.isConnected()
+            ?.then((res) => walletIsConnected.set(res.result));
+    });
 
-    export let isConnected = window.mina.isConnected();
     export let enable = window.mina.enable;
     export let disconnect = window.mina.disconnect;
     export const signMessage = async () => {
@@ -124,26 +132,22 @@
                 <div class="stats shadow">
                     <div class="stat">
                         <div class="stat-title">Wallet</div>
-                        <div class="stat-value">{walletName}</div>
+                        <div class="stat-value">{$walletName}</div>
                     </div>
                     <div class="stat">
                         <div class="stat-title">Icon</div>
                         <div class="stat-value">
                             <img
-                                src={walletIcon}
+                                src={$walletIcon}
                                 width="28"
                                 height="28"
-                                alt={walletName}
+                                alt={$walletName}
                             />
                         </div>
                     </div>
                     <div class="stat">
                         <div class="stat-title">Enabled</div>
-                        {#await isConnected}
-                            <div class="stat-value">Loading</div>
-                        {:then connected}
-                            <div class="stat-value">{connected.result}</div>
-                        {/await}
+                        <div class="stat-value">{$walletIsConnected}</div>
                     </div>
                 </div>
                 <div class="flex gap-2">
