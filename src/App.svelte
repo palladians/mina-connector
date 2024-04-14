@@ -1,7 +1,7 @@
 <script lang="ts">
     import { writable } from "svelte/store";
     import { constructPaymentTx } from "./lib/tx";
-    import { exampleCredential } from "./credentials/mock_credential";
+    import { createMockCredential } from "./credentials/mock_credential";
     import { onMount } from "svelte";
 
     export const messageToSign = writable<string>("Message to sign");
@@ -103,11 +103,13 @@
         });
     };
     const setCredentialState = async () => {
+        const account = getAccounts()
+        const credential = createMockCredential(account[0])
         const response = await window.mina.request({
             method: "mina_setState",
             params: {
-                objectName: "exampleCredential",
-                object: exampleCredential,
+                objectName: "Pallad Mock Credential",
+                object: credential,
             },
         });
         console.log(response);

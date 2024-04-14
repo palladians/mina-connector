@@ -1,19 +1,48 @@
-export const mockCredential = {
+export const createMockCredential = (publicKey) => {
+  return {
     '@context': ['https://www.w3.org/2018/credentials/v1'],
     id: 'http://example.edu/credentials/3732',
-    type: ['VerifiableCredential', 'UniversityDegreeCredential'],
-    issuer: 'University of Example',
-    issuanceDate: '2010-01-01T00:00:00Z',
+    type: ['VerifiableCredential', 'UniversityDegreeCredential', 'AstronautCredential'],
+    issuer: 'University of Palladia',
+    issuanceDate: '2024-04-14T00:00:00Z',
     credentialSubject: {
-      id: 'did:mina:B62qjsV6WQwTeEWrNrRRBP6VaaLvQhwWTnFi4WP4LQjGvpfZEumXzxb',
+      id: `did:mina:${publicKey}`,
       degree: {
         type: 'BachelorDegree',
         name: 'Bachelor of Science and Arts'
-      }
+      },
+      astronautTraining: {
+        basicTrainingCompleted: true,
+        advancedTraining: ['Spacewalks', 'Robotic Operations', 'Piloting Spacecraft'],
+        missionsParticipated: [
+          {
+            missionName: 'Artemis IV',
+            role: 'Mission Specialist',
+            year: 2024
+          },
+          {
+            missionName: 'Palladia Space Station Maintenance Mission',
+            role: 'Lead Engineer',
+            year: 2024
+          }
+        ]
+      },
+      microgravityExperiments: [
+        {
+          experimentName: 'Protein Crystal Growth',
+          description: 'Experiment to study the growth of protein crystals in microgravity conditions.',
+          outcomes: 'Successfully identified three potential new drug candidates.'
+        },
+        {
+          experimentName: 'Fluid Dynamics Experiment',
+          description: 'Analysis of fluid behavior in microgravity to improve models used in Palladia\'s climate science.',
+          outcomes: 'Provided valuable data to refine Palladia\'s climate models.'
+        }
+      ]
     },
     proof: {
       type: 'Kimchi',
-      created: '2023-09-19T12:40:16Z',
+      created: '2024-04-14T12:40:16Z',
       proof: {
         publicInput: ['0'],
         publicOutput: ['1'],
@@ -21,7 +50,8 @@ export const mockCredential = {
         proof: 'KChzdGF0ZW1...SkpKSkp'
       }
     }
-  }
+  };
+};
 
 export const exampleCredential = {
     "@context": [
