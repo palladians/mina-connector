@@ -132,17 +132,17 @@
         const response = await window.mina.request({
             method: "mina_addChain",
             params: {
-                    nodeEndpoint: {
-                    providerName: 'mina-node',
-                    url: 'https://proxy.minaexplorer.com/graphql'
-                    },
-                    archiveNodeEndpoint: {
-                    providerName: 'mina-node',
-                    url: 'https://graphql.minaexplorer.com'
-                    },
-                    networkName: 'Mainnet',
-                    networkType: 'mainnet',
-                    chainId: '...'
+                nodeEndpoint: {
+                providerName: 'mina-node',
+                url: 'https://sequencer-zeko-dev.dcspark.io/graphql'
+                },
+                archiveNodeEndpoint: {
+                providerName: 'mina-node',
+                url: ''
+                },
+                networkName: 'ZekoDevNet',
+                networkType: 'testnet',
+                chainId: '69420'
             }
         });
         console.log('addChain response', response)
@@ -155,11 +155,11 @@
 
     const switchChain = async () => {
         //const berkeleyChainId = 'fd7d111973bf5a9e3e87384f560fdead2f272589ca00b6d9e357fca9839631da'
-        const mainnetChainId = '5f704cc0c82e0ed70e873f0893d7e06f148524e3f0bdae2afb02e7819a0c24d1'
+        const zekoDevnet = '69420'
         const response = await window.mina.request({
             method: "mina_switchChain",
             params: {
-                    chainId: mainnetChainId
+                    chainId: zekoDevnet
             }
         });
         console.log('switchChain response', response)
