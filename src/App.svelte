@@ -116,6 +116,58 @@
         // nothing to write in the app
         // since it is writing to Pallad
     };
+
+    const requestNetwork = async () => {
+        const response = await window.mina.request({
+            method: "mina_requestNetwork"
+        });
+        console.log('requestNetwork response', response)
+            results.set({
+            ...$results,
+            requestNetworkResponse: response.result,
+        });
+    };
+
+    const addChain = async () => {
+        const response = await window.mina.request({
+            method: "mina_addChain",
+            params: {
+                    nodeEndpoint: {
+                    providerName: 'mina-node',
+                    url: 'https://proxy.minaexplorer.com/graphql'
+                    },
+                    archiveNodeEndpoint: {
+                    providerName: 'mina-node',
+                    url: 'https://graphql.minaexplorer.com'
+                    },
+                    networkName: 'Mainnet',
+                    networkType: 'mainnet',
+                    chainId: '...'
+            }
+        });
+        console.log('addChain response', response)
+            results.set({
+            ...$results,
+            addChainResponse: response.result,
+        });
+
+    }
+
+    const switchChain = async () => {
+        //const berkeleyChainId = 'fd7d111973bf5a9e3e87384f560fdead2f272589ca00b6d9e357fca9839631da'
+        const mainnetChainId = '5f704cc0c82e0ed70e873f0893d7e06f148524e3f0bdae2afb02e7819a0c24d1'
+        const response = await window.mina.request({
+            method: "mina_switchChain",
+            params: {
+                    chainId: mainnetChainId
+            }
+        });
+        console.log('switchChain response', response)
+            results.set({
+            ...$results,
+            switchChainResponse: response.result,
+        });
+    };
     export const results = writable({
         accounts: "",
         chainId: "",
@@ -124,6 +176,9 @@
         signMessage: "",
         signTransactions: "",
         credential: "",
+        addChainResponse: "",
+        switchChainResponse: "",
+        requestNetworkResponse: ""
     });
 </script>
 
@@ -189,6 +244,27 @@
                     />
                     <button class="btn btn-neutral flex-1" on:click={getBalance}
                         >mina_getBalance</button
+                    >
+                    <input
+                        class="input input-bordered"
+                        value={$results.requestNetworkResponse}
+                    />
+                    <button class="btn btn-neutral flex-1" on:click={requestNetwork}
+                        >mina_requestNetwork</button
+                    >
+                    <input
+                        class="input input-bordered"
+                        value={$results.addChainResponse}
+                    />
+                    <button class="btn btn-neutral flex-1" on:click={addChain}
+                        >mina_addChain</button
+                    >
+                    <input
+                        class="input input-bordered"
+                        value={$results.switchChainResponse}
+                    />
+                    <button class="btn btn-neutral flex-1" on:click={switchChain}
+                        >mina_switchChain</button
                     >
                 </div>
             </div>
