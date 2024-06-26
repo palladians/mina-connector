@@ -7,9 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "lint": "bunx biome check .",
+    "format": "bunx biome check --write .",
+    "format:unsafe": "bunx biome check --write --unsafe ."
   },
   "devDependencies": {
+    "@biomejs/biome": "1.8.2",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
     "@tsconfig/svelte": "^5.0.2",
     "autoprefixer": "latest",

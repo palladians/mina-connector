@@ -1,5 +1,5 @@
-import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { defineConfig } from "vite";
 import topLevelAwait from "vite-plugin-top-level-await";
 
 // https://vitejs.dev/config/
