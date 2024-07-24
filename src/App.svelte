@@ -50,7 +50,7 @@ export const signMessage = async () => {
 export const signFields = async () => {
   const response = await $currentProvider?.provider.request({
     method: "mina_signFields",
-    params: JSON.parse($fieldsToSign),
+    params: { fields: JSON.parse($fieldsToSign) },
   });
   results.set({
     ...$results,
