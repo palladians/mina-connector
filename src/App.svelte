@@ -1,206 +1,215 @@
 <script lang="ts">
-import { onMount } from "svelte";
-import { derived, writable } from "svelte/store";
-import { createMockCredential } from "./credentials/mock_credential";
-import { constructPaymentTx } from "./lib/tx";
+    import { onMount } from "svelte";
+    import { derived, writable } from "svelte/store";
+    import { createMockCredential } from "./credentials/mock_credential";
 
-type MinaProvider = {
-  info: {
-    icon: string;
-    name: string;
-    rdns: string;
-    slug: string;
-  };
-  // biome-ignore lint/suspicious/noExplicitAny: todo
-  provider: any;
-};
+    type MinaProvider = {
+        info: {
+            icon: string;
+            name: string;
+            rdns: string;
+            slug: string;
+        };
+        // biome-ignore lint/suspicious/noExplicitAny: todo
+        provider: any;
+    };
 
-export const providers = writable<MinaProvider[]>([]);
-export const currentProviderSlug = writable<string>(
-  localStorage.getItem("currentProvider") ?? "",
-);
-currentProviderSlug.subscribe((newSlug) =>
-  localStorage.setItem("currentProvider", newSlug),
-);
-export const currentProvider = derived(
-  [providers, currentProviderSlug],
-  ([$providers, $currentProviderSlug]) =>
-    $providers.find((provider) => provider.info.slug === $currentProviderSlug),
-);
-export const messageToSign = writable<string>("Message to sign");
-export const fieldsToSign = writable<string>("[0]");
+    export const providers = writable<MinaProvider[]>([]);
+    export const currentProviderSlug = writable<string>(
+        localStorage.getItem("currentProvider") ?? "",
+    );
+    currentProviderSlug.subscribe((newSlug) =>
+        localStorage.setItem("currentProvider", newSlug),
+    );
+    export const currentProvider = derived(
+        [providers, currentProviderSlug],
+        ([$providers, $currentProviderSlug]) =>
+            $providers.find(
+                (provider) => provider.info.slug === $currentProviderSlug,
+            ),
+    );
+    export const messageToSign = writable<string>("Message to sign");
+    export const fieldsToSign = writable<string>("[0]");
 
-onMount(() => {
-  window.addEventListener("mina:announceProvider", (event) => {
-    providers.set([...$providers, event.detail]);
-  });
-  window.dispatchEvent(new Event("mina:requestProvider"));
-});
+    onMount(() => {
+        window.addEventListener("mina:announceProvider", (event) => {
+            providers.set([...$providers, event.detail]);
+        });
+        window.dispatchEvent(new Event("mina:requestProvider"));
+    });
 
-export const signMessage = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_sign",
-    params: { message: $messageToSign },
-  });
-  results.set({
-    ...$results,
-    signMessage: JSON.stringify(response.result, undefined, "\t"),
-  });
-};
-export const signFields = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_signFields",
-    params: { fields: JSON.parse($fieldsToSign) },
-  });
-  results.set({
-    ...$results,
-    signFields: JSON.stringify(response.result, undefined, "\t"),
-  });
-};
-const signTx = async () => {
-  const accountsResponse = await $currentProvider?.provider.request({
-    method: "mina_accounts",
-  });
-  const constructedTx = constructPaymentTx({
-    from: accountsResponse.result[0],
-    to: "B62qkYa1o6Mj6uTTjDQCob7FYZspuhkm4RRQhgJg9j4koEBWiSrTQrS",
-    amount: 100,
-    fee: 1,
-    type: "payment",
-    nonce: 0,
-    validUntil: 321,
-  });
-  console.log(JSON.stringify(constructedTx));
-  const response = await $currentProvider?.provider.request({
-    method: "mina_signTransaction",
-    params: { transaction: constructedTx },
-  });
-  results.set({
-    ...$results,
-    signTransactions: JSON.stringify(response.result, undefined, "\t"),
-  });
-};
-const getAccounts = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_accounts",
-  });
-  console.log(response);
-  results.set({
-    ...$results,
-    accounts: JSON.stringify(response.result),
-  });
-};
-const getChainId = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_chainId",
-  });
-  console.log(response);
-  results.set({
-    ...$results,
-    chainId: response.result,
-  });
-};
-const getBalance = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_getBalance",
-  });
-  console.log(response);
-  results.set({
-    ...$results,
-    balance: response.result,
-  });
-};
-const getCredential = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_getState",
-    params: { query: { issuer: "University of Example" }, props: [] },
-  });
-  console.log(response);
-  results.set({
-    ...$results,
-    credential: JSON.stringify(response.result, undefined, "\t"),
-  });
-};
-const setCredentialState = async () => {
-  const account = getAccounts();
-  const credential = createMockCredential(account[0]);
-  const response = await $currentProvider?.provider.request({
-    method: "mina_setState",
-    params: {
-      objectName: "Pallad Mock Credential",
-      object: credential,
-    },
-  });
-  console.log(response);
-  // nothing to write in the app
-  // since it is writing to Pallad
-};
+    export const signMessage = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_sign",
+            params: { message: $messageToSign },
+        });
+        results.set({
+            ...$results,
+            signMessage: JSON.stringify(response.result, undefined, "\t"),
+        });
+    };
+    export const signFields = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_signFields",
+            params: { fields: JSON.parse($fieldsToSign) },
+        });
+        results.set({
+            ...$results,
+            signFields: JSON.stringify(response.result, undefined, "\t"),
+        });
+    };
+    export const createNullifier = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_createNullifier",
+            params: { message: JSON.parse($fieldsToSign) },
+        });
+        results.set({
+            ...$results,
+            signFields: JSON.stringify(response.result, undefined, "\t"),
+        });
+    };
+    const signTx = async () => {
+        const accountsResponse = await $currentProvider?.provider.request({
+            method: "mina_accounts",
+        });
+        const transaction = {
+            ...$transactionBody,
+            from:
+                $transactionBody.from.length > 0
+                    ? $transactionBody.from
+                    : accountsResponse.result[0],
+        };
+        const response = await $currentProvider?.provider.request({
+            method: "mina_signTransaction",
+            params: { transaction },
+        });
+        results.set({
+            ...$results,
+            signTransactions: JSON.stringify(response.result, undefined, "\t"),
+        });
+        return response.result;
+    };
+    const sendTx = async () => {
+        const accountsResponse = await $currentProvider?.provider.request({
+            method: "mina_accounts",
+        });
+        const transaction = {
+            ...$transactionBody,
+            from:
+                $transactionBody.from.length > 0
+                    ? $transactionBody.from
+                    : accountsResponse.result[0],
+        };
+        const signedTransaction = await signTx();
+        const response = await $currentProvider?.provider.request({
+            method: "mina_sendTransaction",
+            params: {
+                signedTransaction,
+                transactionType: "payment",
+            },
+        });
+        results.set({
+            ...$results,
+            signTransactions: JSON.stringify(response.result, undefined, "\t"),
+        });
+    };
+    const getAccounts = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_accounts",
+        });
+        console.log(response);
+        results.set({
+            ...$results,
+            accounts: JSON.stringify(response.result),
+        });
+        return response.result;
+    };
+    const requestAccounts = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_requestAccounts",
+        });
+        console.log(response);
+        results.set({
+            ...$results,
+            accounts: JSON.stringify(response.result),
+        });
+    };
+    const getChainId = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_chainId",
+        });
+        console.log(response);
+        results.set({
+            ...$results,
+            chainId: response.result,
+        });
+    };
+    const getBalance = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_getBalance",
+        });
+        console.log(response);
+        results.set({
+            ...$results,
+            balance: response.result,
+        });
+    };
+    const getCredential = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_getState",
+            params: { query: { issuer: "University of Example" }, props: [] },
+        });
+        console.log(response);
+        results.set({
+            ...$results,
+            credential: JSON.stringify(response.result, undefined, "\t"),
+        });
+    };
+    const setCredentialState = async () => {
+        const accounts = await getAccounts();
+        const credential = createMockCredential(accounts[0]);
+        const response = await $currentProvider?.provider.request({
+            method: "mina_setState",
+            params: {
+                objectName: "Pallad Mock Credential",
+                object: credential,
+            },
+        });
+        console.log(response);
+    };
 
-const requestNetwork = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_requestNetwork",
-  });
-  console.log("requestNetwork response", response);
-  results.set({
-    ...$results,
-    requestNetworkResponse: response.result,
-  });
-};
-
-const addChain = async () => {
-  const response = await $currentProvider?.provider.request({
-    method: "mina_addChain",
-    params: {
-      nodeEndpoint: {
-        providerName: "mina-node",
-        url: "https://sequencer-zeko-dev.dcspark.io/graphql",
-      },
-      archiveNodeEndpoint: {
-        providerName: "mina-node",
-        url: "",
-      },
-      networkName: "ZekoDevNet",
-      networkType: "testnet",
-      chainId: "69420",
-    },
-  });
-  console.log("addChain response", response);
-  results.set({
-    ...$results,
-    addChainResponse: response.result,
-  });
-};
-
-const switchChain = async () => {
-  //const berkeleyChainId = 'fd7d111973bf5a9e3e87384f560fdead2f272589ca00b6d9e357fca9839631da'
-  const zekoDevnet = "69420";
-  const response = await $currentProvider?.provider.request({
-    method: "mina_switchChain",
-    params: {
-      chainId: zekoDevnet,
-    },
-  });
-  console.log("switchChain response", response);
-  results.set({
-    ...$results,
-    switchChainResponse: response.result,
-  });
-};
-export const results = writable({
-  accounts: "",
-  chainId: "",
-  balance: null,
-  signFields: "",
-  signMessage: "",
-  signTransactions: "",
-  credential: "",
-  addChainResponse: "",
-  switchChainResponse: "",
-  requestNetworkResponse: "",
-});
+    const requestNetwork = async () => {
+        const response = await $currentProvider?.provider.request({
+            method: "mina_requestNetwork",
+        });
+        results.set({
+            ...$results,
+            requestNetworkResponse: JSON.stringify(response.result),
+        });
+    };
+    export const transactionBody = writable({
+        from: "",
+        to: "B62qkYa1o6Mj6uTTjDQCob7FYZspuhkm4RRQhgJg9j4koEBWiSrTQrS",
+        memo: "",
+        fee: 100_000_000,
+        amount: 3_000_000_000,
+        nonce: 0,
+    });
+    export const results = writable({
+        accounts: "",
+        chainId: "",
+        balance: null,
+        signFields: "",
+        signMessage: "",
+        signTransactions: "",
+        credential: "",
+        addChainResponse: "",
+        switchChainResponse: "",
+        requestNetworkResponse: "",
+    });
 </script>
 
-<main class="container mx-auto space-y-4 p-4">
+<main class="container mx-auto space-y-4 p-4 pb-24">
     <div class="grid flex-1 grid-cols-1 items-start gap-8 lg:grid-cols-2">
         <div class="card bg-base-200 shadow-xl">
             <div class="card-body">
@@ -262,10 +271,17 @@ export const results = writable({
                         class="input input-bordered"
                         value={$results.accounts}
                     />
-                    <button
-                        class="btn btn-neutral flex-1"
-                        on:click={getAccounts}>mina_accounts</button
-                    >
+                    <div class="flex gap-2">
+                        <button
+                            class="btn btn-neutral flex-1"
+                            on:click={getAccounts}>mina_accounts</button
+                        >
+                        <button
+                            class="btn btn-neutral flex-1"
+                            on:click={requestAccounts}
+                            >mina_requestAccounts</button
+                        >
+                    </div>
                     <input
                         class="input input-bordered"
                         value={$results.chainId}
@@ -288,21 +304,6 @@ export const results = writable({
                         class="btn btn-neutral flex-1"
                         on:click={requestNetwork}>mina_requestNetwork</button
                     >
-                    <input
-                        class="input input-bordered"
-                        value={$results.addChainResponse}
-                    />
-                    <button class="btn btn-neutral flex-1" on:click={addChain}
-                        >mina_addChain</button
-                    >
-                    <input
-                        class="input input-bordered"
-                        value={$results.switchChainResponse}
-                    />
-                    <button
-                        class="btn btn-neutral flex-1"
-                        on:click={switchChain}>mina_switchChain</button
-                    >
                 </div>
             </div>
         </div>
@@ -317,7 +318,7 @@ export const results = writable({
                 />
                 <div class="grid grid-cols-2 gap-2">
                     <button
-                        class="btn btn-neutral flex-1"
+                        class="btn btn-primary flex-1"
                         on:click={setCredentialState}>mina_setState</button
                     >
                     <button
@@ -348,7 +349,9 @@ export const results = writable({
         </div>
         <div class="card bg-base-200 shadow-xl">
             <div class="card-body">
-                <h2 class="text-2xl font-semibold">Sign Fields</h2>
+                <h2 class="text-2xl font-semibold">
+                    Sign Fields/Create Nullifier
+                </h2>
                 <p>Fields</p>
                 <input
                     class="input input-bordered"
@@ -361,22 +364,52 @@ export const results = writable({
                     placeholder="Result"
                     value={$results.signFields}
                 ></textarea>
-                <button class="btn btn-primary flex-1" on:click={signFields}
-                    >mina_signFields</button
-                >
+                <div class="flex gap-2">
+                    <button class="btn btn-primary flex-1" on:click={signFields}
+                        >mina_signFields</button
+                    >
+                    <button
+                        class="btn btn-neutral flex-1"
+                        on:click={createNullifier}>mina_createNullifier</button
+                    >
+                </div>
             </div>
         </div>
         <div class="card bg-base-200 shadow-xl">
             <div class="card-body">
                 <h2 class="text-2xl font-semibold">Transaction</h2>
                 <p>To</p>
-                <input class="input input-bordered" placeholder="Received" />
+                <input
+                    class="input input-bordered"
+                    placeholder="To"
+                    bind:value={$transactionBody.to}
+                />
                 <p>Amount</p>
-                <input class="input input-bordered" placeholder="Amount" />
+                <input
+                    class="input input-bordered"
+                    type="number"
+                    placeholder="Amount"
+                    bind:value={$transactionBody.amount}
+                />
                 <p>Fee</p>
-                <input class="input input-bordered" placeholder="Fee" />
+                <input
+                    class="input input-bordered"
+                    type="number"
+                    placeholder="Fee"
+                    bind:value={$transactionBody.fee}
+                />
                 <p>Memo</p>
-                <input class="input input-bordered" placeholder="Memo" />
+                <input
+                    class="input input-bordered"
+                    placeholder="Memo"
+                    bind:value={$transactionBody.memo}
+                />
+                <p>Memo</p>
+                <input
+                    class="input input-bordered"
+                    placeholder="Nonce"
+                    bind:value={$transactionBody.nonce}
+                />
                 <p>Result</p>
                 <textarea
                     class="textarea textarea-bordered h-32 resize-none"
@@ -387,7 +420,7 @@ export const results = writable({
                     <button class="btn btn-primary flex-1" on:click={signTx}
                         >mina_signTransaction</button
                     >
-                    <button class="btn btn-neutral flex-1" on:click={signTx}
+                    <button class="btn btn-neutral flex-1" on:click={sendTx}
                         >mina_sendTransaction</button
                     >
                 </div>
