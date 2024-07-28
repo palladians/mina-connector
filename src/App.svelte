@@ -1,212 +1,210 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { derived, writable } from "svelte/store";
-    import { createMockCredential } from "./credentials/mock_credential";
+import { onMount } from "svelte";
+import { derived, writable } from "svelte/store";
+import { createMockCredential } from "./credentials/mock_credential";
 
-    type MinaProvider = {
-        info: {
-            icon: string;
-            name: string;
-            rdns: string;
-            slug: string;
-        };
-        // biome-ignore lint/suspicious/noExplicitAny: todo
-        provider: any;
-    };
+type MinaProvider = {
+  info: {
+    icon: string;
+    name: string;
+    rdns: string;
+    slug: string;
+  };
+  // biome-ignore lint/suspicious/noExplicitAny: todo
+  provider: any;
+};
 
-    export const providers = writable<MinaProvider[]>([]);
-    export const currentProviderSlug = writable<string>(
-        localStorage.getItem("currentProvider") ?? "",
-    );
-    currentProviderSlug.subscribe((newSlug) =>
-        localStorage.setItem("currentProvider", newSlug),
-    );
-    export const currentProvider = derived(
-        [providers, currentProviderSlug],
-        ([$providers, $currentProviderSlug]) =>
-            $providers.find(
-                (provider) => provider.info.slug === $currentProviderSlug,
-            ),
-    );
-    export const messageToSign = writable<string>("Message to sign");
-    export const fieldsToSign = writable<string>("[0]");
+export const providers = writable<MinaProvider[]>([]);
+export const currentProviderSlug = writable<string>(
+  localStorage.getItem("currentProvider") ?? "",
+);
+currentProviderSlug.subscribe((newSlug) =>
+  localStorage.setItem("currentProvider", newSlug),
+);
+export const currentProvider = derived(
+  [providers, currentProviderSlug],
+  ([$providers, $currentProviderSlug]) =>
+    $providers.find((provider) => provider.info.slug === $currentProviderSlug),
+);
+export const messageToSign = writable<string>("Message to sign");
+export const fieldsToSign = writable<string>("[0]");
 
-    onMount(() => {
-        window.addEventListener("mina:announceProvider", (event) => {
-            providers.set([...$providers, event.detail]);
-        });
-        window.dispatchEvent(new Event("mina:requestProvider"));
-    });
+onMount(() => {
+  window.addEventListener("mina:announceProvider", (event) => {
+    providers.set([...$providers, event.detail]);
+  });
+  window.dispatchEvent(new Event("mina:requestProvider"));
+});
 
-    export const signMessage = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_sign",
-            params: { message: $messageToSign },
-        });
-        results.set({
-            ...$results,
-            signMessage: JSON.stringify(response.result, undefined, "\t"),
-        });
-    };
-    export const signFields = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_signFields",
-            params: { fields: JSON.parse($fieldsToSign) },
-        });
-        results.set({
-            ...$results,
-            signFields: JSON.stringify(response.result, undefined, "\t"),
-        });
-    };
-    export const createNullifier = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_createNullifier",
-            params: { message: JSON.parse($fieldsToSign) },
-        });
-        results.set({
-            ...$results,
-            signFields: JSON.stringify(response.result, undefined, "\t"),
-        });
-    };
-    const signTx = async () => {
-        const accountsResponse = await $currentProvider?.provider.request({
-            method: "mina_accounts",
-        });
-        const transaction = {
-            ...$transactionBody,
-            from:
-                $transactionBody.from.length > 0
-                    ? $transactionBody.from
-                    : accountsResponse.result[0],
-        };
-        const response = await $currentProvider?.provider.request({
-            method: "mina_signTransaction",
-            params: { transaction },
-        });
-        results.set({
-            ...$results,
-            signTransactions: JSON.stringify(response.result, undefined, "\t"),
-        });
-        return response.result;
-    };
-    const sendTx = async () => {
-        const accountsResponse = await $currentProvider?.provider.request({
-            method: "mina_accounts",
-        });
-        const transaction = {
-            ...$transactionBody,
-            from:
-                $transactionBody.from.length > 0
-                    ? $transactionBody.from
-                    : accountsResponse.result[0],
-        };
-        const signedTransaction = await signTx();
-        const response = await $currentProvider?.provider.request({
-            method: "mina_sendTransaction",
-            params: {
-                signedTransaction,
-                transactionType: "payment",
-            },
-        });
-        results.set({
-            ...$results,
-            signTransactions: JSON.stringify(response.result, undefined, "\t"),
-        });
-    };
-    const getAccounts = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_accounts",
-        });
-        console.log(response);
-        results.set({
-            ...$results,
-            accounts: JSON.stringify(response.result),
-        });
-        return response.result;
-    };
-    const requestAccounts = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_requestAccounts",
-        });
-        console.log(response);
-        results.set({
-            ...$results,
-            accounts: JSON.stringify(response.result),
-        });
-    };
-    const getChainId = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_chainId",
-        });
-        console.log(response);
-        results.set({
-            ...$results,
-            chainId: response.result,
-        });
-    };
-    const getBalance = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_getBalance",
-        });
-        console.log(response);
-        results.set({
-            ...$results,
-            balance: response.result,
-        });
-    };
-    const getCredential = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_getState",
-            params: { query: { issuer: "University of Example" }, props: [] },
-        });
-        console.log(response);
-        results.set({
-            ...$results,
-            credential: JSON.stringify(response.result, undefined, "\t"),
-        });
-    };
-    const setCredentialState = async () => {
-        const accounts = await getAccounts();
-        const credential = createMockCredential(accounts[0]);
-        const response = await $currentProvider?.provider.request({
-            method: "mina_setState",
-            params: {
-                objectName: "Pallad Mock Credential",
-                object: credential,
-            },
-        });
-        console.log(response);
-    };
+export const signMessage = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_sign",
+    params: { message: $messageToSign },
+  });
+  results.set({
+    ...$results,
+    signMessage: JSON.stringify(response.result, undefined, "\t"),
+  });
+};
+export const signFields = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_signFields",
+    params: { fields: JSON.parse($fieldsToSign) },
+  });
+  results.set({
+    ...$results,
+    signFields: JSON.stringify(response.result, undefined, "\t"),
+  });
+};
+export const createNullifier = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_createNullifier",
+    params: { message: JSON.parse($fieldsToSign) },
+  });
+  results.set({
+    ...$results,
+    signFields: JSON.stringify(response.result, undefined, "\t"),
+  });
+};
+const signTx = async () => {
+  const accountsResponse = await $currentProvider?.provider.request({
+    method: "mina_accounts",
+  });
+  const transaction = {
+    ...$transactionBody,
+    from:
+      $transactionBody.from.length > 0
+        ? $transactionBody.from
+        : accountsResponse.result[0],
+  };
+  const response = await $currentProvider?.provider.request({
+    method: "mina_signTransaction",
+    params: { transaction },
+  });
+  results.set({
+    ...$results,
+    signTransactions: JSON.stringify(response.result, undefined, "\t"),
+  });
+  return response.result;
+};
+const sendTx = async () => {
+  const accountsResponse = await $currentProvider?.provider.request({
+    method: "mina_accounts",
+  });
+  const transaction = {
+    ...$transactionBody,
+    from:
+      $transactionBody.from.length > 0
+        ? $transactionBody.from
+        : accountsResponse.result[0],
+  };
+  const signedTransaction = await signTx();
+  const response = await $currentProvider?.provider.request({
+    method: "mina_sendTransaction",
+    params: {
+      signedTransaction,
+      transactionType: "payment",
+    },
+  });
+  results.set({
+    ...$results,
+    signTransactions: JSON.stringify(response.result, undefined, "\t"),
+  });
+};
+const getAccounts = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_accounts",
+  });
+  console.log(response);
+  results.set({
+    ...$results,
+    accounts: JSON.stringify(response.result),
+  });
+  return response.result;
+};
+const requestAccounts = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_requestAccounts",
+  });
+  console.log(response);
+  results.set({
+    ...$results,
+    accounts: JSON.stringify(response.result),
+  });
+};
+const getChainId = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_chainId",
+  });
+  console.log(response);
+  results.set({
+    ...$results,
+    chainId: response.result,
+  });
+};
+const getBalance = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_getBalance",
+  });
+  console.log(response);
+  results.set({
+    ...$results,
+    balance: response.result,
+  });
+};
+const getCredential = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_getState",
+    params: { query: { issuer: "University of Example" }, props: [] },
+  });
+  console.log(response);
+  results.set({
+    ...$results,
+    credential: JSON.stringify(response.result, undefined, "\t"),
+  });
+};
+const setCredentialState = async () => {
+  const accounts = await getAccounts();
+  const credential = createMockCredential(accounts[0]);
+  const response = await $currentProvider?.provider.request({
+    method: "mina_setState",
+    params: {
+      objectName: "Pallad Mock Credential",
+      object: credential,
+    },
+  });
+  console.log(response);
+};
 
-    const requestNetwork = async () => {
-        const response = await $currentProvider?.provider.request({
-            method: "mina_requestNetwork",
-        });
-        results.set({
-            ...$results,
-            requestNetworkResponse: JSON.stringify(response.result),
-        });
-    };
-    export const transactionBody = writable({
-        from: "",
-        to: "B62qkYa1o6Mj6uTTjDQCob7FYZspuhkm4RRQhgJg9j4koEBWiSrTQrS",
-        memo: "",
-        fee: 100_000_000,
-        amount: 3_000_000_000,
-        nonce: 0,
-    });
-    export const results = writable({
-        accounts: "",
-        chainId: "",
-        balance: null,
-        signFields: "",
-        signMessage: "",
-        signTransactions: "",
-        credential: "",
-        addChainResponse: "",
-        switchChainResponse: "",
-        requestNetworkResponse: "",
-    });
+const requestNetwork = async () => {
+  const response = await $currentProvider?.provider.request({
+    method: "mina_requestNetwork",
+  });
+  results.set({
+    ...$results,
+    requestNetworkResponse: JSON.stringify(response.result),
+  });
+};
+export const transactionBody = writable({
+  from: "",
+  to: "B62qkYa1o6Mj6uTTjDQCob7FYZspuhkm4RRQhgJg9j4koEBWiSrTQrS",
+  memo: "",
+  fee: 100_000_000,
+  amount: 3_000_000_000,
+  nonce: 0,
+});
+export const results = writable({
+  accounts: "",
+  chainId: "",
+  balance: null,
+  signFields: "",
+  signMessage: "",
+  signTransactions: "",
+  credential: "",
+  addChainResponse: "",
+  switchChainResponse: "",
+  requestNetworkResponse: "",
+});
 </script>
 
 <main class="container mx-auto space-y-4 p-4 pb-24">
